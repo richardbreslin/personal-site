@@ -2,14 +2,27 @@ import http from "http"
 import path from "path"
 import express from "express"
 
-const port: number = 8080
+require("dotenv").config();
+
+let PORT: number;
+
+switch (process.env.NODE_ENV) {
+    case "dev":
+        PORT = Number(process.env.DEV_PORT);
+        console.log("Running in Development Mode...")
+        break;
+    case "prod":
+        PORT = Number(process.env.PROD_PORT);
+        console.log("Running in Production Mode...")
+        break;
+}
 
 class App {
     private server: http.Server
-    private port: number
+    private PORT: number
 
-    constructor(port: number) {
-        this.port = port
+    constructor(PORT: number) {
+        this.PORT = PORT
         const app = express()
         app.use(express.static(path.join(__dirname, '../client')))
 
@@ -24,10 +37,9 @@ class App {
     }
 
     public Start() {
-        this.server.listen(this.port, () => {
-            console.log(`Server listening on port ${this.port}.`)
+        this.server.listen(this.PORT, () => {
+            console.log(`Server listening on PORT ${this.PORT}.`)
         })
     }
 }
-
-new App(port).Start()
+new App(PORT).Start()

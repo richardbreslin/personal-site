@@ -1,53 +1,97 @@
 import * as THREE from '/build/three.module.js'
 import { OrbitControls } from '/jsm/controls/OrbitControls'
-import { GLTFLoader } from '/jsm/loaders/GLTFLoader'
-import Stats from '/jsm/libs/stats.module'
+// import Stats from '/jsm/libs/stats.module'
+
 
 const scene: THREE.Scene = new THREE.Scene()
-const axesHelper = new THREE.AxesHelper(5)
-scene.add(axesHelper)
-
-const light = new THREE.SpotLight();
-light.position.set(0, 10, 0)
-scene.add(light);
-light.castShadow = true;
-light.intensity = .3
-light.color = new THREE.Color(0xff691f)
-
-const lightGit = new THREE.SpotLight();
-lightGit.position.set(0, 3, 0)
-scene.add(lightGit);
-lightGit.color = new THREE.Color(0xff1f1f)
-lightGit.castShadow = true;
-
-const light2: THREE.SpotLight = new THREE.SpotLight();
-
+// const axesHelper = new THREE.AxesHelper(5)
+// scene.add(axesHelper)
 
 const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-camera.position.y = 10
+camera.position.set(0, 0, 6)
+
 
 const renderer: THREE.WebGLRenderer = new THREE.WebGLRenderer()
-// renderer.physicallyCorrectLights = true
-// renderer.shadowMap.enabled = true
+renderer.physicallyCorrectLights = true
+renderer.shadowMap.enabled = true
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputEncoding = THREE.sRGBEncoding
 renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild(renderer.domElement)
 
 const controls = new OrbitControls(camera, renderer.domElement)
 
-const loader = new GLTFLoader()
+const raycaster = new THREE.Raycaster();
+
+let ISOHEDRON: THREE.Object3D;
+let GitHubLogo: THREE.Object3D;
+let LinkedInLogo: THREE.Object3D;
+let gitAnimate: boolean;
+let linkedInAnimate: boolean;
+let isoAnimate: boolean;
+
+const loader = new THREE.ObjectLoader();
 loader.load(
-    'portfolio2MESHED.glb',
-    function (gltf) {
-        scene.add(gltf.scene);
+    "portandisofinal.json",
+    function (obj) {
+        obj.position.set(0, -7, 0)
+        scene.add(obj);
+        console.log(obj);
+        ISOHEDRON = obj.children[0];
+        GitHubLogo = obj.children[1].children[5];
+        LinkedInLogo = obj.children[1].children[6];
+        animate();
     },
-    (xhr) => {
-        console.log((xhr.loaded / xhr.total * 100) + '% loaded')
+
+    function (xhr) {
+        console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+
     },
-    (error) => {
-        console.log(error);
+
+    function (err) {
+        console.error('An error happened');
     }
 );
+
+
+function onMouseMove(event: MouseEvent) {
+    const mouse = {
+        x: (event.clientX / renderer.domElement.clientWidth) * 2 - 1,
+        y: -(event.clientY / renderer.domElement.clientHeight) * 2 + 1
+    }
+
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersectsGitHubLogo = raycaster.intersectObject(GitHubLogo, false);
+    const intersectsLinkedInLogo = raycaster.intersectObject(LinkedInLogo, false);
+    const intersectsIsohedron = raycaster.intersectObject(ISOHEDRON, false);
+
+    (intersectsGitHubLogo.length > 0) ? gitAnimate = true : gitAnimate = false;
+    (intersectsLinkedInLogo.length > 0) ? linkedInAnimate = true : linkedInAnimate = false;
+    (intersectsIsohedron.length > 0) ? isoAnimate = true : isoAnimate = false;
+
+}
+
+function onClick(event: MouseEvent) {
+    const mouse = {
+        x: (event.clientX / renderer.domElement.clientWidth) * 2 - 1,
+        y: -(event.clientY / renderer.domElement.clientHeight) * 2 + 1
+    }
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersectsGitHubLogo = raycaster.intersectObject(GitHubLogo, false);
+    const intersectsLinkedInLogo = raycaster.intersectObject(LinkedInLogo, false);
+
+    if (intersectsGitHubLogo.length > 0) {
+        window.open("https://github.com/richardbreslin")
+    }
+    if (intersectsLinkedInLogo.length > 0) {
+        window.open("https://www.linkedin.com/in/r-breslin/")
+    }
+}
+
+renderer.domElement.addEventListener('click', onClick, false);
+renderer.domElement.addEventListener('mousemove', onMouseMove, false);
 
 window.addEventListener('resize', onWindowResize, false)
 function onWindowResize() {
@@ -57,20 +101,31 @@ function onWindowResize() {
     render()
 }
 
-const stats = Stats()
-document.body.appendChild(stats.dom)
+// const stats = Stats()
+// document.body.appendChild(stats.dom)
 
-var animate = function () {
+let isoMove = function () {
+    ISOHEDRON.rotation.y += 0.02;
+    ISOHEDRON.rotation.z += 0.02;
+}
+
+let animate = function () {
     requestAnimationFrame(animate)
 
-    controls.update()
+    ISOHEDRON.rotation.z += 0.01;
+    ISOHEDRON.rotation.y += 0.01;
+
+    (gitAnimate) ? (GitHubLogo.position.y += 0.005) : (GitHubLogo.position.y = 0);
+    (linkedInAnimate) ? (LinkedInLogo.position.y += 0.005) : (LinkedInLogo.position.y = 0);
+    (isoAnimate) ? isoMove() : null;
 
     render()
+    // stats.update()
 
-    stats.update()
 };
 
 function render() {
-    renderer.render(scene, camera)
+    controls.update()
+    renderer.render(scene, camera);
 }
-animate();
+window.requestAnimationFrame(render);

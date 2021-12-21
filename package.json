@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "dev": "concurrently -k \"tsc -p ./src/server -w\" \"tsc -p ./src/client -w\" \"NODE_ENV=dev nodemon ./dist/server/server.js\"",
-    "prod": "cd dist/server/ && NODE_ENV=prod  node server.js"
+    "prod": " tsc -p ./src/server && tsc -p ./src/client && cd dist/server/ && NODE_ENV=prod  node server.js"
   },
   "author": "",
   "license": "ISC",

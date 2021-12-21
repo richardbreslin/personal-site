@@ -8,11 +8,11 @@ let PORT: number;
 
 switch (process.env.NODE_ENV) {
     case "dev":
-        PORT = Number(process.env.DEV_PORT);
+        PORT = 3000;
         console.log("Running in Development Mode...")
         break;
     case "prod":
-        PORT = Number(process.env.PROD_PORT);
+        PORT = 443;
         console.log("Running in Production Mode...")
         break;
 }
